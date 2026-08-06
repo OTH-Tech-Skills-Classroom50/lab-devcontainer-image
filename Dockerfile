@@ -29,3 +29,12 @@ RUN printf '%s\n' \
     'check50 --local "OTH-Tech-Skills-Classroom50/technology-skills-checks/main/$ASSIGNMENT"' \
     > /usr/local/bin/check \
     && chmod +x /usr/local/bin/check
+
+# submit: thin alias for `gh student submit` -- gh-student already reads all
+# the context it needs (repo, .classroom50.yaml) itself, so this just saves
+# students from having to know the real command name.
+RUN printf '%s\n' \
+    '#!/usr/bin/env bash' \
+    'exec gh student submit "$@"' \
+    > /usr/local/bin/submit \
+    && chmod +x /usr/local/bin/submit
