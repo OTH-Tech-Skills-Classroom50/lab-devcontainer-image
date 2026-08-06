@@ -1,14 +1,17 @@
 FROM mcr.microsoft.com/devcontainers/python:3.12
 
-# GitHub CLI (apt repo per https://github.com/cli/cli/blob/trunk/docs/install_linux.md)
-RUN (type -p wget >/dev/null || (apt-get update && apt-get install -y wget)) \
-    && mkdir -p -m 755 /etc/apt/keyrings \
-    && wget -nv -O /etc/apt/keyrings/githubcli-archive-keyring.gpg https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-    && chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages/deb stable main" \
-       | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-    && apt-get update \
-    && apt-get install -y gh sqlite3 nodejs npm \
+# GitHub CLI, installed from the .deb release asset rather than cli.github.com's
+# own apt repo -- that repo has been returning 404 on dists/stable/Release since
+# at least 2026-08-06 (external outage, unrelated to this Dockerfile; confirmed
+# via https://github.com/orgs/community/discussions/184211, an ongoing GitHub
+# Pages/Actions-adjacent infra issue others have hit too). This path uses
+# GitHub Releases instead, a different, currently-working infrastructure.
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl sqlite3 nodejs npm \
+    && GH_VERSION=$(curl -fsSL https://api.github.com/repos/cli/cli/releases/latest | grep -oP '"tag_name":\s*"v\K[^"]+') \
+    && ARCH=$(dpkg --print-architecture) \
+    && curl -fsSL -o /tmp/gh.deb "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${ARCH}.deb" \
+    && apt-get install -y /tmp/gh.deb \
+    && rm -f /tmp/gh.deb \
     && rm -rf /var/lib/apt/lists/*
 
 # Live-preview server for HTML/CSS/JS labs (mirrors the live-server devcontainer feature)
