@@ -28,8 +28,19 @@ RUN python3 -m pip install --no-cache-dir --upgrade pip \
 # shared runner IPs blow through easily (confirmed: 403 rate-limit here on a
 # clean run). The workflow passes its own token in as a build secret so this
 # runs authenticated instead.
-RUN --mount=type=secret,id=gh_token \
+#
+# Installed as the `vscode` user specifically, not root: `gh extension
+# install` writes into the invoking user's own $HOME/.local/share/gh, and
+# Codespaces run as `vscode` at runtime -- installing as root (the default
+# build user) put the extension somewhere the runtime user's `gh` never
+# looks. Confirmed: this caused `gh student submit` / the `submit` alias to
+# fail with 'unknown command "student"' even though the install step itself
+# succeeded during the build and `check` (a plain /usr/local/bin script,
+# user-independent) worked fine.
+USER vscode
+RUN --mount=type=secret,id=gh_token,mode=0444 \
     GH_TOKEN="$(cat /run/secrets/gh_token)" gh extension install foundation50/gh-student
+USER root
 
 # check: reads the assignment slug from .classroom50.yaml (written by `gh student accept`)
 # and runs the matching check50 checks from the course's public checks repo.
