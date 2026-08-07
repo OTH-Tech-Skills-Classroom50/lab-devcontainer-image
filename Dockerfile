@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM mcr.microsoft.com/devcontainers/python:3.12
 
 # GitHub CLI, installed from the .deb release asset rather than cli.github.com's
@@ -21,8 +22,14 @@ RUN npm install -g live-server
 RUN python3 -m pip install --no-cache-dir --upgrade pip \
     && python3 -m pip install --no-cache-dir pytest cs50 flask requests check50
 
-# Student CLI, baked in so no network install is needed at Codespace creation time
-RUN gh extension install foundation50/gh-student
+# Student CLI, baked in so no network install is needed at Codespace creation time.
+# `gh extension install` hits the GitHub API to resolve the latest release;
+# unauthenticated calls share a 60/hr limit per source IP, which Actions'
+# shared runner IPs blow through easily (confirmed: 403 rate-limit here on a
+# clean run). The workflow passes its own token in as a build secret so this
+# runs authenticated instead.
+RUN --mount=type=secret,id=gh_token \
+    GH_TOKEN="$(cat /run/secrets/gh_token)" gh extension install foundation50/gh-student
 
 # check: reads the assignment slug from .classroom50.yaml (written by `gh student accept`)
 # and runs the matching check50 checks from the course's public checks repo.
