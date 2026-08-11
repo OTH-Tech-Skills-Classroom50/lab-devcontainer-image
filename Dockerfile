@@ -42,14 +42,14 @@ RUN --mount=type=secret,id=gh_token,mode=0444 \
     GH_TOKEN="$(cat /run/secrets/gh_token)" gh extension install foundation50/gh-student
 USER root
 
-# check: reads the assignment slug from .classroom50.yaml (written by `gh student accept`)
-# and runs the matching check50 checks from the course's public checks repo.
-RUN printf '%s\n' \
-    '#!/usr/bin/env bash' \
-    'ASSIGNMENT=$(grep '"'"'^assignment:'"'"' .classroom50.yaml | sed -E '"'"'s/^assignment:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/'"'"')' \
-    'check50 --local "OTH-Tech-Skills-Classroom50/technology-skills-checks/main/$ASSIGNMENT"' \
-    > /usr/local/bin/check \
-    && chmod +x /usr/local/bin/check
+# check: reads the assignment slug from .classroom50.yaml (written by `gh student accept`),
+# runs the matching check50 checks from the course's public checks repo, and
+# reformats check50's own JSON output to match the course's original
+# pytest-based output style (colored "label: PASSED/FAILED" lines using each
+# check's docstring, no "expected X, not Y" diff detail, no HTML-report
+# trailer line). See ./check for the actual script.
+COPY check /usr/local/bin/check
+RUN chmod +x /usr/local/bin/check
 
 # submit: thin alias for `gh student submit` -- gh-student already reads all
 # the context it needs (repo, .classroom50.yaml) itself, so this just saves
