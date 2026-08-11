@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ASSIGNMENT=$(grep '^assignment:' .classroom50.yaml | sed -E 's/^assignment:[[:space:]]*"?([^"]*)"?[[:space:]]*$/\1/')
+REPORT=$(mktemp)
+check50 --local -o json --output-file "$REPORT" "OTH-Tech-Skills-Classroom50/technology-skills-checks/main/$ASSIGNMENT" > /dev/null 2>&1 || true
+
+python3 - "$REPORT" <<'PYEOF'
+import json
+import sys
+
+GREEN = "\033[92m"
+RED = "\033[91m"
+RESET = "\033[0m"
+
+with open(sys.argv[1]) as f:
+    data = json.load(f)
+
+for r in data.get("results", []):
+    name = r.get("description") or r.get("name")
+    if r.get("passed"):
+        print(f"{GREEN}{name}: PASSED ✓{RESET}")
+    else:
+        print(f"{RED}{name}: FAILED ✗{RESET}")
+PYEOF
+
+rm -f "$REPORT"
