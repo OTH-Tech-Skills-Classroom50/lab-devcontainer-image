@@ -22,7 +22,10 @@ RUN npm install -g live-server
 RUN python3 -m pip install --no-cache-dir --upgrade pip \
     && python3 -m pip install --no-cache-dir pytest cs50 flask requests check50
 
-# Student CLI, baked in so no network install is needed at Codespace creation time.
+# Student CLI, baked in as a convenience for students who want `gh student
+# accept`/other subcommands directly -- not used by our own `submit` script
+# (see below) since gh-student login requests admin:org/read:org/repo/workflow,
+# none of which a submission tag push actually needs.
 # `gh extension install` hits the GitHub API to resolve the latest release;
 # unauthenticated calls share a 60/hr limit per source IP, which Actions'
 # shared runner IPs blow through easily (confirmed: 403 rate-limit here on a
@@ -51,11 +54,12 @@ USER root
 COPY check /usr/local/bin/check
 RUN chmod +x /usr/local/bin/check
 
-# submit: thin alias for `gh student submit` -- gh-student already reads all
-# the context it needs (repo, .classroom50.yaml) itself, so this just saves
-# students from having to know the real command name.
-RUN printf '%s\n' \
-    '#!/usr/bin/env bash' \
-    'exec gh student submit "$@"' \
-    > /usr/local/bin/submit \
-    && chmod +x /usr/local/bin/submit
+# submit: plain git commit+push+tag, not `gh student submit`. Confirmed
+# directly that a bare tag push triggers real grading with no elevated auth
+# at all -- matches Classroom50's own documented tag-mode baseline contract
+# (foundation50/classroom50#477: "plain git, no tooling required" is the
+# real mechanism; gh student submit is described as just a convenience
+# automating the same). Students following this course's web-UI accept flow
+# never need to run `gh student login` at all this way. See ./submit.
+COPY submit /usr/local/bin/submit
+RUN chmod +x /usr/local/bin/submit
