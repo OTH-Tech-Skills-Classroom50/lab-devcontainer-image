@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Plain git commit + push + submission tag -- deliberately not `gh student
+# submit`. That command's login (`gh student login`) requests admin:org,
+# read:org, repo, and workflow, none of which a tag push actually needs;
+# Codespaces' own default-scoped GITHUB_TOKEN already covers a normal
+# push. Confirmed directly: a bare `git tag ... && git push origin <tag>`
+# triggers real grading with no elevated auth at all. This mirrors the
+# "plain git, no tooling required" baseline contract Classroom50's own
+# tag-mode design describes (foundation50/classroom50#477) -- gh-student
+# just hasn't caught up to needing only that for submit specifically.
+
+git add -A
+git commit -m "[Classroom 50] Submit" || true
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+git push origin "$BRANCH"
+
+TAG="submit/$(date -u +%Y-%m-%dT%H-%M-%SZ)-$(git rev-parse --short HEAD)"
+git tag "$TAG"
+git push origin "$TAG"
+
+echo "Submitted -- tag: $TAG"
+REPO=$(git config --get remote.origin.url | sed -E 's/\.git$//' | sed -E 's#.*[:/]([^/]+/[^/]+)$#\1#')
+echo "View your submission at: https://github.com/$REPO/releases/tag/$TAG"
