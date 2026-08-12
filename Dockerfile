@@ -18,9 +18,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 # Live-preview server for HTML/CSS/JS labs (mirrors the live-server devcontainer feature)
 RUN npm install -g live-server
 
-# Course-wide Python baseline (same set every lab template installs, kept consistent on purpose)
+# Course-wide Python baseline (same set every lab template installs, kept consistent on purpose).
+# tinycss2/bs4 back the Homepage lab's CSS/HTML static-analysis checks.
 RUN python3 -m pip install --no-cache-dir --upgrade pip \
-    && python3 -m pip install --no-cache-dir pytest cs50 flask requests check50
+    && python3 -m pip install --no-cache-dir pytest cs50 flask requests check50 tinycss2 bs4
 
 # Student CLI, baked in as a convenience for students who want `gh student
 # accept`/other subcommands directly -- not used by our own `submit` script
