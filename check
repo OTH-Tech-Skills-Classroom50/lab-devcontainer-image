@@ -16,6 +16,14 @@ RESET = "\033[0m"
 with open(sys.argv[1]) as f:
     data = json.load(f)
 
+# check50 can fail before running any checks at all (e.g. a required file is
+# missing) -- that shows up as an "error" key with no "results" key. Surface
+# it instead of silently printing nothing.
+if "error" in data:
+    message = data["error"].get("value", "check50 could not run.")
+    print(f"{RED}{message}{RESET}")
+    sys.exit(1)
+
 for r in data.get("results", []):
     name = r.get("description") or r.get("name")
     if r.get("passed"):
