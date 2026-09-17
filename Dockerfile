@@ -20,9 +20,11 @@ RUN npm install -g live-server
 
 # Course-wide Python baseline (same set every lab template installs, kept consistent on purpose).
 # tinycss2/bs4 back the Homepage lab's CSS/HTML static-analysis checks.
-# pypdf backs the Team Health lab's certificate check (PDF text/metadata extraction).
+# pypdf backs the Team Health lab's certificate check. pymupdf backs the AI
+# Drivers License lab's -- pypdf/pdfplumber are unreliable on that specific
+# certificate's PDF structure (confirmed directly), pymupdf isn't.
 RUN python3 -m pip install --no-cache-dir --upgrade pip \
-    && python3 -m pip install --no-cache-dir pytest cs50 flask requests check50 tinycss2 bs4 pypdf
+    && python3 -m pip install --no-cache-dir pytest cs50 flask requests check50 tinycss2 bs4 pypdf pymupdf
 
 # Student CLI, baked in as a convenience for students who want `gh student
 # accept`/other subcommands directly -- not used by our own `submit` script
